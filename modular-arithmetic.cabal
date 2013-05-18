@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                modular-arithmetic
-version:             0.1.0.0
+version:             1.0.0.0
 synopsis:            A type for integers modulo some constant.
 -- description:         
 license:             BSD3
@@ -16,6 +16,7 @@ cabal-version:       >=1.8
 
 library
   hs-source-dirs:      src
+  ghc-options:         -Wall
   exposed-modules:     Data.Modular
   -- other-modules:       
   build-depends:       base ==4.6.*
