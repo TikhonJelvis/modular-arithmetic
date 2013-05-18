@@ -40,11 +40,10 @@
 -- 2
 -- @
 
-module Data.Modular (unMod, toMod, Mod, (/), ℤ) where
+module Data.Modular (unMod, toMod, Mod, (/)(), ℤ) where
 
 import           Control.Arrow (first)
 
-import           Data.Ord      (comparing)
 import           Data.Ratio    ((%))
 
 import           GHC.TypeLits
