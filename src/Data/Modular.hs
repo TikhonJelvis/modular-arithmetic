@@ -2,7 +2,45 @@
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
-module Data.Modular where
+
+-- |
+-- This module provides types for working with integers modulo some
+-- constant.
+-- 
+-- This module uses some new Haskell features introduced in 7.6. In
+-- particular, it needs DataKinds and type literals
+-- (GHC.TypeLits). The TypeOperators extension is needed for the nice
+-- infix syntax.
+-- 
+-- These types are created with the type constructor @Mod@
+-- (or its synonym @/@). To work with integers mod 7, you could write:
+-- @
+-- Int `Mod` 7
+-- Integer `Mod` 7
+-- Integer/7
+-- ℤ/7
+-- @
+-- 
+-- (The last is a synonym for @Integer@ provided by this library. In
+-- Emacs, you can use the Tex input mode to type it with \Bbb{Z}.)
+-- 
+-- All the usual typeclasses are defined for these types. You can also
+-- get the constant using @bound@ or extract the underlying value
+-- using @unMod@.
+--
+-- Here is a quick example:
+-- @
+-- *Data.Modular> (10 :: ℤ/7) * (11 :: ℤ/7)
+-- 5
+-- @
+-- 
+-- It also works correctly with negative numeric literals:
+-- @
+-- *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
+-- 2
+-- @
+
+module Data.Modular (unMod, Mod, (/), ℤ) where
 
 import           Control.Arrow (first)
 
@@ -11,7 +49,13 @@ import           Data.Ratio    ((%))
 
 import           GHC.TypeLits
 
-newtype i `Mod` (n :: Nat) = Mod { unMod :: i } deriving (Eq, Ord)
+newtype i `Mod` (n :: Nat) = Mod i deriving (Eq, Ord)
+
+unMod :: i `Mod` n -> i
+unMod (Mod i) = i
+
+type (/) = Mod
+type ℤ   = Integer
 
 bound :: forall n i. (Integral i, SingI n) => i `Mod` n
 bound = Mod . fromInteger $ fromSing (sing :: Sing n)
