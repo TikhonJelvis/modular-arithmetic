@@ -40,7 +40,7 @@
 -- 2
 -- @
 
-module Data.Modular (unMod, Mod, (/), ℤ) where
+module Data.Modular (unMod, toMod, Mod, (/), ℤ) where
 
 import           Control.Arrow (first)
 
@@ -49,19 +49,30 @@ import           Data.Ratio    ((%))
 
 import           GHC.TypeLits
 
+-- | The actual type, wrapping an underlying @Integeral@ type @i@ in a
+-- newtype annotated with the bound.
 newtype i `Mod` (n :: Nat) = Mod i deriving (Eq, Ord)
 
+-- | Extract the underlying integral value from a modular type.
 unMod :: i `Mod` n -> i
 unMod (Mod i) = i
 
+-- | A synonym for @Mod@, inspired by the ℤ/n syntax from mathematics.
 type (/) = Mod
+
+-- | A synonym for Integer, also inspired by the ℤ/n syntax.
 type ℤ   = Integer
 
-bound :: forall n i. (Integral i, SingI n) => i `Mod` n
-bound = Mod . fromInteger $ fromSing (sing :: Sing n)
+-- | Returns the bound of the modular type in the type itself. This
+-- breaks the invariant of the type, so it shouldn't be used outside
+-- this module.
+_bound :: forall n i. (Integral i, SingI n) => i `Mod` n
+_bound = Mod . fromInteger $ fromSing (sing :: Sing n)
 
+-- | Wraps the underlying type into the modular type, wrapping as
+-- appropriate.
 toMod :: forall n i. (Integral i, SingI n) => i -> i `Mod` n
-toMod i = Mod $ i `mod` unMod (bound :: i `Mod` n)
+toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
 
 instance Show i => Show (i `Mod` n) where show (Mod i) = show i
 instance (Read i, Integral i, SingI n) => Read (i `Mod` n)
@@ -82,7 +93,7 @@ instance (Integral i, SingI n) => Enum (i `Mod` n) where
   fromEnum = fromInteger . toInteger . unMod
 
 instance (Integral i, SingI n) => Bounded (i `Mod` n) where
-  maxBound = pred bound
+  maxBound = pred _bound
   minBound = 0
 
 instance (Integral i, SingI n) => Real (i `Mod` n) where
