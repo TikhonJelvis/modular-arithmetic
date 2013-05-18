@@ -12,8 +12,9 @@
 -- (GHC.TypeLits). The TypeOperators extension is needed for the nice
 -- infix syntax.
 -- 
--- These types are created with the type constructor @Mod@
--- (or its synonym @/@). To work with integers mod 7, you could write:
+-- These types are created with the type constructor 'Mod'
+-- (or its synonym '/'). To work with integers mod 7, you could write:
+-- 
 -- @
 -- Int `Mod` 7
 -- Integer `Mod` 7
@@ -29,12 +30,14 @@
 -- using @unMod@.
 --
 -- Here is a quick example:
+-- 
 -- @
 -- *Data.Modular> (10 :: ℤ/7) * (11 :: ℤ/7)
 -- 5
 -- @
 -- 
 -- It also works correctly with negative numeric literals:
+-- 
 -- @
 -- *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- 2

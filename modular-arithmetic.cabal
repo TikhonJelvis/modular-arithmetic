@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                modular-arithmetic
-version:             1.0.0.0
+version:             1.0.0.1
 synopsis:            A type for integers modulo some constant.
 
 description:         This module provides a convenient type for working with
