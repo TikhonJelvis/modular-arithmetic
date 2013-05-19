@@ -43,7 +43,7 @@
 -- 2
 -- @
 
-module Data.Modular (unMod, toMod, Mod, (/)(), ℤ) where
+module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ) where
 
 import           Control.Arrow (first)
 
@@ -75,6 +75,11 @@ _bound = Mod . fromInteger $ fromSing (sing :: Sing n)
 -- appropriate.
 toMod :: forall n i. (Integral i, SingI n) => i -> i `Mod` n
 toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
+
+-- | Wraps an integral number to a mod, converting between integral
+-- types.
+toMod' :: forall n i j. (Integral i, Integral j, SingI n) => i -> j `Mod` n
+toMod' = toMod . fromIntegral
 
 instance Show i => Show (i `Mod` n) where show (Mod i) = show i
 instance (Read i, Integral i, SingI n) => Read (i `Mod` n)
