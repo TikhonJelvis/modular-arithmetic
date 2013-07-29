@@ -8,22 +8,20 @@
 -- constant.
 -- 
 -- This module uses some new Haskell features introduced in 7.6. In
--- particular, it needs DataKinds and type literals
--- (GHC.TypeLits). The TypeOperators extension is needed for the nice
--- infix syntax.
+-- particular, it needs @DataKinds@ and type literals
+-- ("GHC.TypeLits"). The @TypeOperators@ extension is needed for the
+-- nice infix syntax.
 -- 
 -- These types are created with the type constructor 'Mod'
 -- (or its synonym '/'). To work with integers mod 7, you could write:
 -- 
--- @
--- Int `Mod` 7
--- Integer `Mod` 7
--- Integer/7
--- ℤ/7
--- @
+-- > Int `Mod` 7
+-- > Integer `Mod` 7
+-- > Integer/7
+-- > ℤ/7
 -- 
 -- (The last is a synonym for @Integer@ provided by this library. In
--- Emacs, you can use the Tex input mode to type it with \Bbb{Z}.)
+-- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
 -- 
 -- All the usual typeclasses are defined for these types. You can also
 -- get the constant using @bound@ or extract the underlying value
@@ -31,17 +29,13 @@
 --
 -- Here is a quick example:
 -- 
--- @
--- *Data.Modular> (10 :: ℤ/7) * (11 :: ℤ/7)
--- 5
--- @
+-- > *Data.Modular> (10 :: ℤ/7) * (11 :: ℤ/7)
+-- > 5
 -- 
 -- It also works correctly with negative numeric literals:
 -- 
--- @
--- *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
--- 2
--- @
+-- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
+-- > 2
 
 module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ) where
 
