@@ -73,7 +73,7 @@ toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
 -- | Wraps an integral number to a mod, converting between integral
 -- types.
 toMod' :: forall n i j. (Integral i, Integral j, SingI n) => i -> j `Mod` n
-toMod' = toMod . fromIntegral
+toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ fromSing (sing :: Sing n))
 
 instance Show i => Show (i `Mod` n) where show (Mod i) = show i
 instance (Read i, Integral i, SingI n) => Read (i `Mod` n)
