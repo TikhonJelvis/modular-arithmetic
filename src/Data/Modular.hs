@@ -93,6 +93,12 @@ instance (Integral i, SingI n) => Enum (i `Mod` n) where
   toEnum = fromInteger . toInteger
   fromEnum = fromInteger . toInteger . unMod
 
+  enumFrom     x   = enumFromTo     x maxBound
+  enumFromThen x y = enumFromThenTo x y bound
+    where
+      bound | fromEnum y >= fromEnum x = maxBound
+            | otherwise               = minBound
+
 instance (Integral i, SingI n) => Bounded (i `Mod` n) where
   maxBound = pred _bound
   minBound = 0
