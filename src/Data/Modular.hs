@@ -41,6 +41,7 @@ module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ) where
 
 import           Control.Arrow (first)
 
+import           Data.Proxy    (Proxy (..))
 import           Data.Ratio    ((%))
 
 import           GHC.TypeLits
@@ -62,24 +63,24 @@ type ℤ   = Integer
 -- | Returns the bound of the modular type in the type itself. This
 -- breaks the invariant of the type, so it shouldn't be used outside
 -- this module.
-_bound :: forall n i. (Integral i, SingI n) => i `Mod` n
-_bound = Mod . fromInteger $ fromSing (sing :: Sing n)
-
+_bound :: forall n i. (Integral i, KnownNat n) => i `Mod` n
+_bound = Mod . fromInteger $ natVal (Proxy :: Proxy n)
+                            
 -- | Wraps the underlying type into the modular type, wrapping as
 -- appropriate.
-toMod :: forall n i. (Integral i, SingI n) => i -> i `Mod` n
+toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
 toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
 
 -- | Wraps an integral number to a mod, converting between integral
 -- types.
-toMod' :: forall n i j. (Integral i, Integral j, SingI n) => i -> j `Mod` n
-toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ fromSing (sing :: Sing n))
+toMod' :: forall n i j. (Integral i, Integral j, KnownNat n) => i -> j `Mod` n
+toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ natVal (Proxy :: Proxy n))
 
 instance Show i => Show (i `Mod` n) where show (Mod i) = show i
-instance (Read i, Integral i, SingI n) => Read (i `Mod` n)
+instance (Read i, Integral i, KnownNat n) => Read (i `Mod` n)
   where readsPrec prec = map (first toMod) . readsPrec prec
 
-instance (Integral i, SingI n) => Num (i `Mod` n) where
+instance (Integral i, KnownNat n) => Num (i `Mod` n) where
   fromInteger = toMod . fromInteger
 
   Mod i₁ + Mod i₂ = toMod $ i₁ + i₂
@@ -89,7 +90,7 @@ instance (Integral i, SingI n) => Num (i `Mod` n) where
   signum (Mod i) = toMod $ signum i
   negate (Mod i) = toMod $ negate i
 
-instance (Integral i, SingI n) => Enum (i `Mod` n) where
+instance (Integral i, KnownNat n) => Enum (i `Mod` n) where
   toEnum = fromInteger . toInteger
   fromEnum = fromInteger . toInteger . unMod
 
@@ -99,13 +100,13 @@ instance (Integral i, SingI n) => Enum (i `Mod` n) where
       bound | fromEnum y >= fromEnum x = maxBound
             | otherwise               = minBound
 
-instance (Integral i, SingI n) => Bounded (i `Mod` n) where
+instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
   maxBound = pred _bound
   minBound = 0
 
-instance (Integral i, SingI n) => Real (i `Mod` n) where
+instance (Integral i, KnownNat n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
-instance (Integral i, SingI n) => Integral (i `Mod` n) where
+instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
   Mod i₁ `quotRem` Mod i₂ = let (q, r) = i₁ `quotRem` i₂ in (toMod q, toMod r)
