@@ -107,12 +107,15 @@ instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
 instance (Integral i, KnownNat n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
+-- | Integer division uses modular inverse @'inv'@,
+-- so it is possible to divide only by numbers coprime to @n@
+-- and the remainder is always @0@.
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
-  Mod i₁ `quotRem` Mod i₂ = let (q, r) = i₁ `quotRem` i₂ in (toMod q, toMod r)
+  i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
 
 -- | The modular inverse.
--- Note that only numbers coprime to N have an inverse modulo N.
+-- Note that only numbers coprime to @n@ have an inverse modulo @n@.
 inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
 inv = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod
   where
