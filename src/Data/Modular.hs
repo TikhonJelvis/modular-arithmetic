@@ -37,7 +37,7 @@
 -- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- > 2
 
-module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ) where
+module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ) where
 
 import           Control.Arrow (first)
 
@@ -110,3 +110,15 @@ instance (Integral i, KnownNat n) => Real (i `Mod` n) where
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
   Mod i₁ `quotRem` Mod i₂ = let (q, r) = i₁ `quotRem` i₂ in (toMod q, toMod r)
+
+-- | The modular inverse.
+-- Note that only numbers coprime to N have an inverse modulo N.
+inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
+inv = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod
+  where
+    inv' _ 1 = (0, 1)
+    inv' n x = (r', q' - r' * q)
+      where
+        (q,  r)  = n `quotRem` x
+        (q', r') = inv' x r
+
