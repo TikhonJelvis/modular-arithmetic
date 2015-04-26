@@ -37,7 +37,7 @@
 -- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- > 2
 
-module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ) where
+module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ, modVal) where
 
 import           Control.Arrow (first)
 
@@ -110,3 +110,9 @@ instance (Integral i, KnownNat n) => Real (i `Mod` n) where
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
   Mod i₁ `quotRem` Mod i₂ = let (q, r) = i₁ `quotRem` i₂ in (toMod q, toMod r)
+
+-- | Convert an integral number @i@ into a @'Mod'@ value given
+-- modular bound @n@ at type level.
+modVal :: forall i proxy n. (Integral i, KnownNat n) => i -> proxy n -> Mod i n
+modVal i _ = toMod i
+
