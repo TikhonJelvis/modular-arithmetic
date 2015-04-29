@@ -53,7 +53,7 @@ unMod :: i `Mod` n -> i
 unMod (Mod i) = i
 
 -- | A synonym for @Mod@, inspired by the ℤ/n syntax from mathematics.
-type (/) = Mod
+type i / n = i `Mod` n
 
 -- | A synonym for Integer, also inspired by the ℤ/n syntax.
 type ℤ   = Integer
