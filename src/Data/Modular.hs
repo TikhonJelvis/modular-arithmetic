@@ -117,8 +117,14 @@ instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
 -- | The modular inverse.
 -- Note that only numbers coprime to @n@ have an inverse modulo @n@.
 inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
-inv = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod
+inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
   where
+    -- these are only used for error message
+    modulus = show $ natVal (Proxy :: Proxy n)
+    divisor = show (toInteger k)
+
+    -- backwards Euclidean algorithm
+    inv' _ 0 = error ("division by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
     inv' _ 1 = (0, 1)
     inv' n x = (r', q' - r' * q)
       where
