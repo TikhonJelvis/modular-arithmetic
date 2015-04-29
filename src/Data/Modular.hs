@@ -36,7 +36,7 @@
 -- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
 -- synonym, you need @TypeOperators@.
 
-module Data.Modular (unMod, toMod, toMod', Mod, inv, (+:)(), (/)(), ℤ, modVal, SomeMod, someModVal) where
+module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
 
 import           Control.Arrow (first)
 
