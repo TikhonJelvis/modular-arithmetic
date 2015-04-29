@@ -5,18 +5,12 @@
 {-# LANGUAGE GADTs               #-}
 
 -- |
--- This module provides types for working with integers modulo some
--- constant.
+-- Types for working with integers modulo some constant.
 -- 
--- This module uses some new Haskell features introduced in 7.6. In
--- particular, it needs @DataKinds@ and type literals
--- ("GHC.TypeLits"). The @TypeOperators@ extension is needed for the
--- nice infix syntax.
+-- @'Mod'@ and its synonym @'/'@ let you wrap arbitrary numeric types
+-- in a modulus. To work with integers (mod 7) backed by @Integer@,
+-- you could write:
 -- 
--- These types are created with the type constructor 'Mod'
--- (or its synonym '/'). To work with integers mod 7, you could write:
--- 
--- > Int `Mod` 7
 -- > Integer `Mod` 7
 -- > Integer/7
 -- > ℤ/7
@@ -24,9 +18,8 @@
 -- (The last is a synonym for @Integer@ provided by this library. In
 -- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
 -- 
--- All the usual typeclasses are defined for these types. You can also
--- get the constant using @bound@ or extract the underlying value
--- using @unMod@.
+-- The usual numeric typeclasses are defined for these types. You can
+-- always extrac the underlying value with @'unMod'@.
 --
 -- Here is a quick example:
 -- 
@@ -37,6 +30,10 @@
 -- 
 -- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- > 2
+--
+-- To us type level numeric literals you need to enable the
+-- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
+-- synonym, you need @TypeOperators@.
 
 module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
 
