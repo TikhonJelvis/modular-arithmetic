@@ -2,6 +2,7 @@
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE GADTs               #-}
 
 -- |
 -- This module provides types for working with integers modulo some
@@ -37,7 +38,7 @@
 -- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- > 2
 
-module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ) where
+module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
 
 import           Control.Arrow (first)
 
@@ -130,4 +131,23 @@ inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
       where
         (q,  r)  = n `quotRem` x
         (q', r') = inv' x r
+
+-- | This type represents a modular number with unknown bound.
+data SomeMod i where
+  SomeMod :: forall i (n :: Nat). KnownNat n => Mod i n -> SomeMod i
+
+instance Show i => Show (SomeMod i) where
+  showsPrec p (SomeMod x) = showsPrec p x
+
+-- | Convert an integral number @i@ into a @'Mod'@ value given
+-- modular bound @n@ at type level.
+modVal :: forall i proxy n. (Integral i, KnownNat n) => i -> proxy n -> Mod i n
+modVal i _ = toMod i
+
+-- | Convert an integral number @i@ into an unknown @'Mod'@ value.
+someModVal :: Integral i => i -> Integer -> Maybe (SomeMod i)
+someModVal i n =
+  case someNatVal n of
+    Nothing -> Nothing
+    Just (SomeNat proxy) -> Just (SomeMod (modVal i proxy))
 
