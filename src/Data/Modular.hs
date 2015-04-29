@@ -38,7 +38,7 @@
 -- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
 -- > 2
 
-module Data.Modular (unMod, toMod, toMod', Mod, (/)(), ℤ, modVal, SomeMod, someModVal) where
+module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
 
 import           Control.Arrow (first)
 
@@ -108,9 +108,29 @@ instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
 instance (Integral i, KnownNat n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
+-- | Integer division uses modular inverse @'inv'@,
+-- so it is possible to divide only by numbers coprime to @n@
+-- and the remainder is always @0@.
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
-  Mod i₁ `quotRem` Mod i₂ = let (q, r) = i₁ `quotRem` i₂ in (toMod q, toMod r)
+  i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
+
+-- | The modular inverse.
+-- Note that only numbers coprime to @n@ have an inverse modulo @n@.
+inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
+inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
+  where
+    -- these are only used for error message
+    modulus = show $ natVal (Proxy :: Proxy n)
+    divisor = show (toInteger k)
+
+    -- backwards Euclidean algorithm
+    inv' _ 0 = error ("division by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
+    inv' _ 1 = (0, 1)
+    inv' n x = (r', q' - r' * q)
+      where
+        (q,  r)  = n `quotRem` x
+        (q', r') = inv' x r
 
 -- | This type represents a modular number with unknown bound.
 data SomeMod i where
