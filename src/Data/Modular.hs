@@ -3,11 +3,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE GADTs               #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- |
 -- Types for working with integers modulo some constant.
 -- 
--- @'Mod'@ and its synonym @'/'@ let you wrap arbitrary numeric types
+-- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
 -- in a modulus. To work with integers (mod 7) backed by @Integer@,
 -- you could write:
 -- 
@@ -35,7 +36,7 @@
 -- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
 -- synonym, you need @TypeOperators@.
 
-module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
+module Data.Modular (unMod, toMod, toMod', Mod, inv, (+:)(), (/)(), ℤ, modVal, SomeMod, someModVal) where
 
 import           Control.Arrow (first)
 
@@ -53,7 +54,7 @@ unMod :: i `Mod` n -> i
 unMod (Mod i) = i
 
 -- | A synonym for @Mod@, inspired by the ℤ/n syntax from mathematics.
-type i / n = i `Mod` n
+type (/) = Mod
 
 -- | A synonym for Integer, also inspired by the ℤ/n syntax.
 type ℤ   = Integer
