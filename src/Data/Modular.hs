@@ -125,7 +125,7 @@ inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
     divisor = show (toInteger k)
 
     -- backwards Euclidean algorithm
-    inv' _ 0 = error ("division by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
+    inv' _ 0 = error ("divide by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
     inv' _ 1 = (0, 1)
     inv' n x = (r', q' - r' * q)
       where
