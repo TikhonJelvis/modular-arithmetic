@@ -1,5 +1,7 @@
 # Modular Arithmetic
 
+[![Build Status](https://travis-ci.org/fizruk/modular-arithmetic.svg?branch=travis-ci)](https://travis-ci.org/fizruk/modular-arithmetic)
+
 This package provides a type for integers modulo some constant, usually written as ℤ/n. 
 
 Here is a quick example:
