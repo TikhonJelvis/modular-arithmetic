@@ -7,36 +7,18 @@
 
 -- |
 -- Types for working with integers modulo some constant.
--- 
--- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
--- in a modulus. To work with integers (mod 7) backed by @Integer@,
--- you could write:
--- 
--- > Integer `Mod` 7
--- > Integer/7
--- > ℤ/7
--- 
--- (The last is a synonym for @Integer@ provided by this library. In
--- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
--- 
--- The usual numeric typeclasses are defined for these types. You can
--- always extrac the underlying value with @'unMod'@.
---
--- Here is a quick example:
--- 
--- > *Data.Modular> (10 :: ℤ/7) * (11 :: ℤ/7)
--- > 5
--- 
--- It also works correctly with negative numeric literals:
--- 
--- > *Data.Modular> (-10 :: ℤ/7) * (11 :: ℤ/7)
--- > 2
---
--- To us type level numeric literals you need to enable the
--- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
--- synonym, you need @TypeOperators@.
+module Data.Modular (
+  -- $doc
 
-module Data.Modular (unMod, toMod, toMod', Mod, inv, (/)(), ℤ, modVal, SomeMod, someModVal) where
+  -- * Preliminaries
+  -- $setup
+
+  -- * Modular arithmetic
+  Mod,
+  unMod, toMod, toMod',
+  inv, (/)(), ℤ,
+  modVal, SomeMod, someModVal
+) where
 
 import           Control.Arrow (first)
 
@@ -44,6 +26,52 @@ import           Data.Proxy    (Proxy (..))
 import           Data.Ratio    ((%))
 
 import           GHC.TypeLits
+
+-- $setup
+--
+-- To use type level numeric literals you need to enable
+-- the @DataKinds@ extension:
+--
+-- >>> :set -XDataKinds
+--
+-- To use infix syntax for @'Mod'@ or the @/@ synonym,
+-- enable @TypeOperators@:
+--
+-- >>> :set -XTypeOperators
+
+-- $doc
+--
+-- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
+-- in a modulus. To work with integers (mod 7) backed by @'Integer'@,
+-- you could write:
+-- 
+-- > Integer `Mod` 7
+-- > Integer/7
+-- > ℤ/7
+-- 
+-- (The ℤ is a synonym for @'Integer'@ provided by this library. In
+-- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
+-- 
+-- The usual numeric typeclasses are defined for these types. You can
+-- always extrac the underlying value with @'unMod'@.
+--
+-- Here is a quick example:
+-- 
+-- >>> 10 * 11 :: ℤ/7
+-- 5
+-- 
+-- It also works correctly with negative numeric literals:
+-- 
+-- >>> (-10) * 11 :: ℤ/7
+-- 2
+--
+-- Modular division is an inverse of modular multiplication.
+-- It is defined when divisor is coprime to modulus:
+--
+-- >>> 7 `div` 3 :: ℤ/16
+-- 13
+-- >>> 3 * 13 :: ℤ/16
+-- 7
 
 -- | The actual type, wrapping an underlying @Integeral@ type @i@ in a
 -- newtype annotated with the bound.
@@ -114,7 +142,17 @@ instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
 
 -- | The modular inverse.
--- Note that only numbers coprime to @n@ have an inverse modulo @n@.
+--
+-- >>> inv 3 :: ℤ/7
+-- 5
+-- >>> 3 * 5 :: ℤ/7
+-- 1
+--
+-- Note that only numbers coprime to @n@ have an inverse modulo @n@:
+--
+-- >>> inv 6 :: ℤ/15
+-- *** Exception: divide by 6 (mod 15), non-coprime to modulus
+--
 inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
 inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
   where

@@ -25,3 +25,11 @@ library
   ghc-options:         -Wall
   exposed-modules:     Data.Modular
   build-depends:       base >=4.7 && <5
+
+test-suite examples
+  hs-source-dirs:      test-suite
+  main-is:             DocTest.hs
+  type:                exitcode-stdio-1.0
+  build-depends:       base
+                     , Glob    ==0.7.*
+                     , doctest ==0.9.*
