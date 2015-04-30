@@ -43,17 +43,18 @@ import           GHC.TypeLits
 --
 -- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
 -- in a modulus. To work with integers (mod 7) backed by @'Integer'@,
--- you could write:
+-- you could use one of the following equivalent types:
 -- 
+-- > Mod Integer 7
 -- > Integer `Mod` 7
 -- > Integer/7
 -- > ℤ/7
 -- 
--- (The ℤ is a synonym for @'Integer'@ provided by this library. In
+-- (@'ℤ'@ is a synonym for @'Integer'@ provided by this library. In
 -- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
 -- 
 -- The usual numeric typeclasses are defined for these types. You can
--- always extrac the underlying value with @'unMod'@.
+-- always extract the underlying value with @'unMod'@.
 --
 -- Here is a quick example:
 -- 
@@ -72,9 +73,13 @@ import           GHC.TypeLits
 -- 13
 -- >>> 3 * 13 :: ℤ/16
 -- 7
+--
+-- To use type level numeric literals you need to enable the
+-- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
+-- synonym, you need @TypeOperators@.
 
--- | The actual type, wrapping an underlying @Integeral@ type @i@ in a
--- newtype annotated with the bound.
+-- | Wraps an underlying @Integeral@ type @i@ in a newtype annotated
+-- with the bound @n@.
 newtype i `Mod` (n :: Nat) = Mod i deriving (Eq, Ord)
 
 -- | Extract the underlying integral value from a modular type.
@@ -93,13 +98,12 @@ type ℤ   = Integer
 _bound :: forall n i. (Integral i, KnownNat n) => i `Mod` n
 _bound = Mod . fromInteger $ natVal (Proxy :: Proxy n)
                             
--- | Wraps the underlying type into the modular type, wrapping as
--- appropriate.
+-- | Injects a value of the underlying type into the modulus type,
+-- wrapping as appropriate.
 toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
 toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
 
--- | Wraps an integral number to a mod, converting between integral
--- types.
+-- | Wraps an integral number, converting between integral types.
 toMod' :: forall n i j. (Integral i, Integral j, KnownNat n) => i -> j `Mod` n
 toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ natVal (Proxy :: Proxy n))
 
@@ -134,9 +138,9 @@ instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
 instance (Integral i, KnownNat n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
--- | Integer division uses modular inverse @'inv'@,
--- so it is possible to divide only by numbers coprime to @n@
--- and the remainder is always @0@.
+-- | Integer division uses modular inverse @'inv'@, so it is possible
+-- to divide only by numbers coprime to @n@ and the remainder is
+-- always @0@.
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
   i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
@@ -168,19 +172,20 @@ inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
         (q,  r)  = n `quotRem` x
         (q', r') = inv' x r
 
--- | This type represents a modular number with unknown bound.
+-- | A modular number with an unknown bound.
 data SomeMod i where
   SomeMod :: forall i (n :: Nat). KnownNat n => Mod i n -> SomeMod i
 
 instance Show i => Show (SomeMod i) where
   showsPrec p (SomeMod x) = showsPrec p x
 
--- | Convert an integral number @i@ into a @'Mod'@ value given
--- modular bound @n@ at type level.
+-- | Convert an integral number @i@ into a @'Mod'@ value given modular
+-- bound @n@ at type level.
 modVal :: forall i proxy n. (Integral i, KnownNat n) => i -> proxy n -> Mod i n
 modVal i _ = toMod i
 
--- | Convert an integral number @i@ into an unknown @'Mod'@ value.
+-- | Convert an integral number @i@ into a @'Mod'@ value with an
+-- unknown modulus.
 someModVal :: Integral i => i -> Integer -> Maybe (SomeMod i)
 someModVal i n =
   case someNatVal n of
