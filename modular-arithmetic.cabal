@@ -11,7 +11,7 @@ bug-reports:         https://github.com/TikhonJelvis/modular-arithmetic/issues
 license:             BSD3
 license-file:        LICENSE
 author:              Tikhon Jelvis <tikhon@jelv.is>
-maintainer:          tikhon@jelv.is
+maintainer:          Tikhon Jelvis <tikhon@jelv.is>
 category:            Math
 build-type:          Simple
 extra-source-files:  README.md
