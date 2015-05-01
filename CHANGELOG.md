@@ -1,3 +1,7 @@
+1.2.1.1
+---
+* added a basic test suite with doctests
+
 1.2.1.0
 ---
 * changed `Integral` implementation: `quotRem` now uses modular inversion!
