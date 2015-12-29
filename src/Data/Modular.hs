@@ -1,9 +1,13 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE KindSignatures      #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE KindSignatures       #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE GADTs                #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE StandaloneDeriving   #-}
 
 -- |
 -- Types for working with integers modulo some constant.
@@ -15,17 +19,23 @@ module Data.Modular (
 
   -- * Modular arithmetic
   Mod,
-  unMod, toMod, toMod',
+  unMod, unMod', toMod, toMod', toMod'',
   inv, (/)(), ℤ,
-  modVal, SomeMod, someModVal
+  modVal, SomeMod, someModVal,
+  Unsign
 ) where
 
 import           Control.Arrow (first)
 
 import           Data.Proxy    (Proxy (..))
 import           Data.Ratio    ((%))
+import           Data.Int
+import           Data.Word
 
 import           GHC.TypeLits
+
+import           Numeric.Natural
+
 
 -- $setup
 --
@@ -78,13 +88,31 @@ import           GHC.TypeLits
 -- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
 -- synonym, you need @TypeOperators@.
 
+type family Unsign (i :: *) :: * -- = (u :: *) where u -> i
+
+type instance Unsign Int = Word
+type instance Unsign Int8 = Word8
+type instance Unsign Int16 = Word16
+type instance Unsign Int32 = Word32
+type instance Unsign Int64 = Word64
+type instance Unsign Integer = Natural
+
+
 -- | Wraps an underlying @Integeral@ type @i@ in a newtype annotated
 -- with the bound @n@.
-newtype i `Mod` (n :: Nat) = Mod i deriving (Eq, Ord)
+newtype i `Mod` (n :: Nat) = Mod (Unsign i)
 
--- | Extract the underlying integral value from a modular type.
-unMod :: i `Mod` n -> i
+deriving instance Eq (Unsign i) => Eq (Mod i n)
+deriving instance Ord (Unsign i) => Ord (Mod i n)
+
+-- | Extract the underlying natural value from a modular value.
+unMod :: i `Mod` n -> Unsign i
 unMod (Mod i) = i
+
+-- | Extract the unquotiented intergral value from a modular value.
+unMod' :: (Integral (Unsign i), Num i) => i `Mod` n -> i
+unMod' (Mod i) = fromIntegral i
+
 
 -- | A synonym for @Mod@, inspired by the ℤ/n syntax from mathematics.
 type (/) = Mod
@@ -92,36 +120,38 @@ type (/) = Mod
 -- | A synonym for Integer, also inspired by the ℤ/n syntax.
 type ℤ   = Integer
 
--- | Returns the bound of the modular type in the type itself. This
--- breaks the invariant of the type, so it shouldn't be used outside
--- this module.
-_bound :: forall n i. (Integral i, KnownNat n) => i `Mod` n
-_bound = Mod . fromInteger $ natVal (Proxy :: Proxy n)
+-- | Injects a value of the quotiented type into the modulus type,
+-- wrapping as appropriate.
+toMod :: forall n i. (Integral i, Num (Unsign i), KnownNat n) => i -> i `Mod` n
+toMod i = Mod $ fromIntegral $ i `mod` fromInteger (natVal (Proxy :: Proxy n))
+
+-- | Wraps an integral number, converting between integral types.
+toMod' :: forall n i j. (Integral i, Integral j, Num (Unsign j), KnownNat n) => i -> j `Mod` n
+toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ natVal (Proxy :: Proxy n))
 
 -- | Injects a value of the underlying type into the modulus type,
 -- wrapping as appropriate.
-toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
-toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
+toMod'' :: forall n i. (Integral (Unsign i), KnownNat n) => Unsign i -> i `Mod` n
+toMod'' i = Mod $ fromIntegral $ i `mod` fromInteger (natVal (Proxy :: Proxy n))
 
--- | Wraps an integral number, converting between integral types.
-toMod' :: forall n i j. (Integral i, Integral j, KnownNat n) => i -> j `Mod` n
-toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ natVal (Proxy :: Proxy n))
 
-instance Show i => Show (i `Mod` n) where show (Mod i) = show i
-instance (Read i, Integral i, KnownNat n) => Read (i `Mod` n)
-  where readsPrec prec = map (first toMod) . readsPrec prec
+instance Show (Unsign i) => Show (i `Mod` n) where
+  show (Mod i) = show i
 
-instance (Integral i, KnownNat n) => Num (i `Mod` n) where
-  fromInteger = toMod . fromInteger
+instance (Read (Unsign i), Integral (Unsign i), KnownNat n) => Read (i `Mod` n) where
+  readsPrec prec = map (first toMod'') . readsPrec prec
 
-  Mod i₁ + Mod i₂ = toMod $ i₁ + i₂
-  Mod i₁ * Mod i₂ = toMod $ i₁ * i₂
+instance (Integral i, Integral (Unsign i), KnownNat n) => Num (i `Mod` n) where
+  fromInteger = toMod'' . fromInteger
 
-  abs    (Mod i) = toMod $ abs i
-  signum (Mod i) = toMod $ signum i
-  negate (Mod i) = toMod $ negate i
+  Mod i₁ + Mod i₂ = toMod'' $ i₁ + i₂
+  Mod i₁ * Mod i₂ = toMod'' $ i₁ * i₂
 
-instance (Integral i, KnownNat n) => Enum (i `Mod` n) where
+  abs    (Mod i) = toMod'' $ abs i
+  signum (Mod i) = toMod'' $ signum i
+  negate i       = toMod $ negate $ unMod' i
+
+instance (Integral i, Integral (Unsign i), KnownNat n) => Enum (i `Mod` n) where
   toEnum = fromInteger . toInteger
   fromEnum = fromInteger . toInteger . unMod
 
@@ -131,17 +161,17 @@ instance (Integral i, KnownNat n) => Enum (i `Mod` n) where
       bound | fromEnum y >= fromEnum x = maxBound
             | otherwise               = minBound
 
-instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
-  maxBound = pred _bound
+instance (Integral i, Integral (Unsign i), KnownNat n) => Bounded (i `Mod` n) where
+  maxBound = -1
   minBound = 0
 
-instance (Integral i, KnownNat n) => Real (i `Mod` n) where
+instance (Integral i, Integral (Unsign i), KnownNat n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
 -- | Integer division uses modular inverse @'inv'@, so it is possible
 -- to divide only by numbers coprime to @n@ and the remainder is
 -- always @0@.
-instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
+instance (Integral i, Integral (Unsign i), KnownNat n, Show (Unsign i)) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
   i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
 
@@ -157,15 +187,21 @@ instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
 -- >>> inv 6 :: ℤ/15
 -- *** Exception: divide by 6 (mod 15), non-coprime to modulus
 --
-inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
-inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
+inv :: forall n i. (KnownNat n, Integral (Unsign i), Integral i, Show (Unsign i))
+    => Mod i n -> Mod i n
+inv divisor = toMod $ snd $ inv' modulus' divisor'
   where
-    -- these are only used for error message
-    modulus = show $ natVal (Proxy :: Proxy n)
-    divisor = show (toInteger k)
+    modulus :: Unsign i
+    modulus = fromInteger $ natVal (Proxy :: Proxy n)
+
+    modulus', divisor' :: i
+    modulus' = fromIntegral modulus
+    divisor' = unMod' divisor
 
     -- backwards Euclidean algorithm
-    inv' _ 0 = error ("divide by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
+    inv' :: i -> i -> (i , i)
+    inv' _ 0 = error $
+      "divide by " ++ show divisor ++ " (mod " ++ show modulus ++ "), non-coprime to modulus"
     inv' _ 1 = (0, 1)
     inv' n x = (r', q' - r' * q)
       where
@@ -176,17 +212,17 @@ inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
 data SomeMod i where
   SomeMod :: forall i (n :: Nat). KnownNat n => Mod i n -> SomeMod i
 
-instance Show i => Show (SomeMod i) where
+instance Show (Unsign i) => Show (SomeMod i) where
   showsPrec p (SomeMod x) = showsPrec p x
 
 -- | Convert an integral number @i@ into a @'Mod'@ value given modular
 -- bound @n@ at type level.
-modVal :: forall i proxy n. (Integral i, KnownNat n) => i -> proxy n -> Mod i n
+modVal :: forall i proxy n. (Integral i, Integral (Unsign i), KnownNat n) => i -> proxy n -> Mod i n
 modVal i _ = toMod i
 
 -- | Convert an integral number @i@ into a @'Mod'@ value with an
 -- unknown modulus.
-someModVal :: Integral i => i -> Integer -> Maybe (SomeMod i)
+someModVal :: (Integral i, Integral (Unsign i)) => i -> Integer -> Maybe (SomeMod i)
 someModVal i n =
   case someNatVal n of
     Nothing -> Nothing
