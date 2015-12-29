@@ -44,25 +44,25 @@ import           GHC.TypeLits
 -- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
 -- in a modulus. To work with integers (mod 7) backed by @'Integer'@,
 -- you could use one of the following equivalent types:
--- 
+--
 -- > Mod Integer 7
 -- > Integer `Mod` 7
 -- > Integer/7
 -- > ℤ/7
--- 
+--
 -- (@'ℤ'@ is a synonym for @'Integer'@ provided by this library. In
 -- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
--- 
+--
 -- The usual numeric typeclasses are defined for these types. You can
 -- always extract the underlying value with @'unMod'@.
 --
 -- Here is a quick example:
--- 
+--
 -- >>> 10 * 11 :: ℤ/7
 -- 5
--- 
+--
 -- It also works correctly with negative numeric literals:
--- 
+--
 -- >>> (-10) * 11 :: ℤ/7
 -- 2
 --
@@ -97,7 +97,7 @@ type ℤ   = Integer
 -- this module.
 _bound :: forall n i. (Integral i, KnownNat n) => i `Mod` n
 _bound = Mod . fromInteger $ natVal (Proxy :: Proxy n)
-                            
+
 -- | Injects a value of the underlying type into the modulus type,
 -- wrapping as appropriate.
 toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
@@ -191,4 +191,3 @@ someModVal i n =
   case someNatVal n of
     Nothing -> Nothing
     Just (SomeNat proxy) -> Just (SomeMod (modVal i proxy))
-
