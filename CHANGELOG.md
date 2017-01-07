@@ -1,3 +1,8 @@
+1.2.1.2
+---
+* exported the `/` type operator with `ExplicitNamespaces` enabled to
+  support GHC 8. Should be backwards compatible through GHC 7.6.
+
 1.2.1.1
 ---
 * added a basic test suite with doctests

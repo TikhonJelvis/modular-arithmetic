@@ -1,5 +1,5 @@
 name:                modular-arithmetic
-version:             1.2.1.1
+version:             1.2.1.2
 synopsis:            A type for integers modulo some constant.
 
 description:         A convenient type for working with integers modulo some constant. It saves you from manually wrapping numeric operations all over the place and prevents a range of simple mistakes. @Integer `Mod` 7@ is the type of integers (mod 7) backed by @Integer@.
@@ -26,12 +26,12 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall
   exposed-modules:     Data.Modular
-  build-depends:       base >=4.7 && <5
+  build-depends:       base >= 4.7 && < 5
 
 test-suite examples
   hs-source-dirs:      test-suite
   main-is:             DocTest.hs
   type:                exitcode-stdio-1.0
-  build-depends:       base
-                     , Glob    ==0.7.*
-                     , doctest ==0.9.*
+  build-depends:       base >= 4.7 && < 5
+                     , Glob >= 0.7 && < 0.8
+                     , doctest >= 0.9 && < 0.12

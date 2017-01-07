@@ -3,7 +3,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE GADTs               #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies        #-}
+
+{-# LANGUAGE ExplicitNamespaces  #-}
 
 -- |
 -- Types for working with integers modulo some constant.
@@ -16,7 +18,7 @@ module Data.Modular (
   -- * Modular arithmetic
   Mod,
   unMod, toMod, toMod',
-  inv, (/)(), ℤ,
+  inv, type (/)(), ℤ,
   modVal, SomeMod, someModVal
 ) where
 
@@ -154,7 +156,7 @@ instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
 --
 -- Note that only numbers coprime to @n@ have an inverse modulo @n@:
 --
--- >>> inv 6 :: ℤ/15
+-- > inv 6 :: ℤ/15
 -- *** Exception: divide by 6 (mod 15), non-coprime to modulus
 --
 inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
