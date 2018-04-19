@@ -27,7 +27,11 @@ import           Control.Arrow (first)
 import           Data.Proxy    (Proxy (..))
 import           Data.Ratio    ((%))
 
+#if MIN_VERSION_base(4,11,0)
+import           GHC.TypeLits hiding (Mod)
+#else
 import           GHC.TypeLits
+#endif
 
 -- $setup
 --
