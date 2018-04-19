@@ -1,3 +1,7 @@
+1.2.1.3
+---
+* fixed a name clash with GHC.TypeLits for base >= 4.11.0
+
 1.2.1.2
 ---
 * exported the `/` type operator with `ExplicitNamespaces` enabled to
