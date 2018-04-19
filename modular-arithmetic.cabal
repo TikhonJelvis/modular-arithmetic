@@ -27,7 +27,6 @@ library
   ghc-options:         -Wall
   exposed-modules:     Data.Modular
   build-depends:       base >= 4.7 && < 5
-  extensions:          CPP
 
 test-suite examples
   hs-source-dirs:      test-suite
@@ -36,4 +35,3 @@ test-suite examples
   build-depends:       base >= 4.7 && < 5
                      , Glob >= 0.7 && < 0.8
                      , doctest >= 0.9 && < 0.15
-  extensions:          CPP

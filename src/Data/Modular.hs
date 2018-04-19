@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeFamilies        #-}
 
 {-# LANGUAGE ExplicitNamespaces  #-}
-
+{-# LANGUAGE CPP#-}
 -- |
 -- Types for working with integers modulo some constant.
 module Data.Modular (
