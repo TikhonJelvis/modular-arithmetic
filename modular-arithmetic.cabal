@@ -35,5 +35,5 @@ test-suite examples
   type:                exitcode-stdio-1.0
   build-depends:       base >= 4.7 && < 5
                      , Glob >= 0.7 && < 0.8
-                     , doctest >= 0.9 && < 0.12
+                     , doctest >= 0.9 && < 0.15
   extensions:          CPP
