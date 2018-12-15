@@ -26,12 +26,11 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall
   exposed-modules:     Data.Modular
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base
 
 test-suite examples
   hs-source-dirs:      test-suite
   main-is:             DocTest.hs
   type:                exitcode-stdio-1.0
-  build-depends:       base >= 4.7 && < 5
-                     , Glob >= 0.7 && < 0.8
-                     , doctest >= 0.9 && < 0.15
+  build-depends:       base
+                     , doctest >= 0.9
