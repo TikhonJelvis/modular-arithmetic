@@ -1,5 +1,12 @@
+# Haskell
 .cabal-sandbox/
 cabal.sandbox.config
 dist
+dist-newstyle
 cabal-dev
+
+# Emacs
 *~
+
+# Nix
+result
