@@ -1,6 +1,8 @@
+{-# LANGUAGE AllowAmbiguousTypes           #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE TypeFamilies        #-}
@@ -101,13 +103,13 @@ type ℤ   = Integer
 -- | Returns the bound of the modular type in the type itself. This
 -- breaks the invariant of the type, so it shouldn't be used outside
 -- this module.
-_bound :: forall n i. (Integral i, KnownNat n) => i `Mod` n
-_bound = Mod . fromInteger $ natVal (Proxy :: Proxy n)
+_bound :: forall n i. (Integral i, KnownNat n) => i
+_bound = fromInteger $ natVal (Proxy :: Proxy n)
                             
 -- | Injects a value of the underlying type into the modulus type,
 -- wrapping as appropriate.
 toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
-toMod i = Mod $ i `mod` unMod (_bound :: i `Mod` n)
+toMod i = Mod $ i `mod` (_bound @n)
 
 -- | Wraps an integral number, converting between integral types.
 toMod' :: forall n i j. (Integral i, Integral j, KnownNat n) => i -> j `Mod` n
@@ -128,17 +130,17 @@ instance (Integral i, KnownNat n) => Num (i `Mod` n) where
   negate (Mod i) = toMod $ negate i
 
 instance (Integral i, KnownNat n) => Enum (i `Mod` n) where
-  toEnum = fromInteger . toInteger
-  fromEnum = fromInteger . toInteger . unMod
+  toEnum = fromIntegral
+  fromEnum = fromIntegral . unMod
 
   enumFrom     x   = enumFromTo     x maxBound
   enumFromThen x y = enumFromThenTo x y bound
     where
       bound | fromEnum y >= fromEnum x = maxBound
-            | otherwise               = minBound
+            | otherwise                = minBound
 
 instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
-  maxBound = pred _bound
+  maxBound = Mod $ pred (_bound @n)
   minBound = 0
 
 instance (Integral i, KnownNat n) => Real (i `Mod` n) where
@@ -149,34 +151,38 @@ instance (Integral i, KnownNat n) => Real (i `Mod` n) where
 -- always @0@.
 instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
   toInteger (Mod i) = toInteger i
-  i₁ `quotRem` i₂ = (i₁ * inv i₂, 0)
+  i₁ `quotRem` i₂ = (i₁ * unwrap (inv i₂), 0)
+    where
+      -- these are only used for error message
+      modulus = show (_bound @n @Integer)
+      divisor = show (toInteger i₂)
+      unwrap (Just x) = x
+      unwrap Nothing  =
+        error ("divide by " ++ divisor ++
+               " (mod " ++ modulus ++ "), non-coprime to modulus")
 
 -- | The modular inverse.
 --
--- >>> inv 3 :: ℤ/7
--- 5
+-- >>> inv 3 :: Maybe (ℤ/7)
+-- Just 5
 -- >>> 3 * 5 :: ℤ/7
 -- 1
 --
 -- Note that only numbers coprime to @n@ have an inverse modulo @n@:
 --
--- > inv 6 :: ℤ/15
--- *** Exception: divide by 6 (mod 15), non-coprime to modulus
+-- >>> inv 6 :: Maybe (ℤ/15)
+-- Nothing
 --
-inv :: forall n i. (KnownNat n, Integral i) => Mod i n -> Mod i n
-inv k = toMod . snd . inv' (fromInteger (natVal (Proxy :: Proxy n))) . unMod $ k
+inv :: forall n i. (KnownNat n, Integral i) => (i/n) -> Maybe (i/n)
+inv (Mod k) = toMod . snd <$> inv' (_bound @n) k
   where
-    -- these are only used for error message
-    modulus = show $ natVal (Proxy :: Proxy n)
-    divisor = show (toInteger k)
-
     -- backwards Euclidean algorithm
-    inv' _ 0 = error ("divide by " ++ divisor ++ " (mod " ++ modulus ++ "), non-coprime to modulus")
-    inv' _ 1 = (0, 1)
-    inv' n x = (r', q' - r' * q)
-      where
-        (q,  r)  = n `quotRem` x
-        (q', r') = inv' x r
+    inv' _ 0 = Nothing
+    inv' _ 1 = Just (0, 1)
+    inv' n x = do
+      let (q,  r)  = n `quotRem` x
+      (q', r') <- inv' x r
+      pure (r', q' - r' * q)
 
 -- | A modular number with an unknown bound.
 data SomeMod i where
@@ -197,4 +203,3 @@ someModVal i n =
   case someNatVal n of
     Nothing -> Nothing
     Just (SomeNat proxy) -> Just (SomeMod (modVal i proxy))
-
