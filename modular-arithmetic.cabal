@@ -1,3 +1,4 @@
+cabal-version:       2.2
 name:                modular-arithmetic
 version:             2.0.0.0
 synopsis:            A type for integers modulo some constant.
@@ -8,7 +9,7 @@ description:         A convenient type for working with integers modulo some con
 
 homepage:            https://github.com/TikhonJelvis/modular-arithmetic
 bug-reports:         https://github.com/TikhonJelvis/modular-arithmetic/issues
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Tikhon Jelvis <tikhon@jelv.is>
 maintainer:          Tikhon Jelvis <tikhon@jelv.is>
@@ -16,7 +17,6 @@ category:            Math
 build-type:          Simple
 extra-source-files:  README.md
                    , CHANGELOG.md
-cabal-version:       >=1.8
 
 source-repository head
   type:           git
@@ -25,6 +25,7 @@ source-repository head
 library
   hs-source-dirs:      src
   ghc-options:         -Wall
+  default-language:    Haskell2010
   exposed-modules:     Data.Modular
   build-depends:       base >4.9 && <5
                      , typelits-witnesses <0.5
@@ -32,6 +33,7 @@ library
 test-suite examples
   hs-source-dirs:      test-suite
   main-is:             DocTest.hs
+  default-language:    Haskell2010
   type:                exitcode-stdio-1.0
   build-depends:       base >4.9 && <5
                      , doctest >= 0.9
