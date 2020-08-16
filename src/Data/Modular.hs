@@ -1,5 +1,8 @@
-{-# LANGUAGE AllowAmbiguousTypes           #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ConstraintKinds     #-}
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE ExplicitNamespaces  #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
@@ -7,8 +10,6 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE TypeFamilies        #-}
 
-{-# LANGUAGE ExplicitNamespaces  #-}
-{-# LANGUAGE CPP#-}
 -- |
 -- Types for working with integers modulo some constant.
 module Data.Modular (
@@ -18,7 +19,7 @@ module Data.Modular (
   -- $setup
 
   -- * Modular arithmetic
-  Mod,
+  Mod, Modulus,
   unMod, toMod, toMod',
   inv, type (/)(), ℤ,
   modVal, SomeMod, someModVal
@@ -27,13 +28,19 @@ module Data.Modular (
 import           Control.Arrow (first)
 
 import           Data.Proxy    (Proxy (..))
-import           Data.Ratio    ((%))
+import           Data.Ratio    ((%), denominator, numerator)
+import           Data.Type.Equality     ((:~:)(..))
+
+import           Text.Printf   (printf)
 
 #if MIN_VERSION_base(4,11,0)
 import           GHC.TypeLits hiding (Mod)
 #else
 import           GHC.TypeLits
 #endif
+
+import           GHC.TypeLits.Compare   ((%<=?), (:<=?)(LE, NLE))
+import           GHC.TypeLits.Witnesses (SNat (SNat))
 
 -- $setup
 --
@@ -46,41 +53,53 @@ import           GHC.TypeLits
 -- enable @TypeOperators@:
 --
 -- >>> :set -XTypeOperators
+--
+-- To use type applications with @'toMod'@ and friends:
+--
+-- >>> :set -XTypeApplications
+--
 
 -- $doc
 --
 -- @'Mod'@ and its synonym @/@ let you wrap arbitrary numeric types
 -- in a modulus. To work with integers (mod 7) backed by @'Integer'@,
 -- you could use one of the following equivalent types:
--- 
+--
 -- > Mod Integer 7
 -- > Integer `Mod` 7
 -- > Integer/7
 -- > ℤ/7
--- 
+--
 -- (@'ℤ'@ is a synonym for @'Integer'@ provided by this library. In
 -- Emacs, you can use the TeX input mode to type it with @\\Bbb{Z}@.)
--- 
+--
 -- The usual numeric typeclasses are defined for these types. You can
 -- always extract the underlying value with @'unMod'@.
 --
 -- Here is a quick example:
--- 
+--
 -- >>> 10 * 11 :: ℤ/7
 -- 5
--- 
+--
 -- It also works correctly with negative numeric literals:
--- 
+--
 -- >>> (-10) * 11 :: ℤ/7
 -- 2
 --
 -- Modular division is an inverse of modular multiplication.
 -- It is defined when divisor is coprime to modulus:
 --
--- >>> 7 `div` 3 :: ℤ/16
+-- >>> 7 / 3 :: ℤ/16
 -- 13
 -- >>> 3 * 13 :: ℤ/16
 -- 7
+--
+-- Note that it raises an exception if the divisor is *not* coprime to
+-- the modulus:
+--
+-- >>> 7 / 4 :: ℤ/16
+-- *** Exception: Cannot invert 4 (mod 16): not coprime to modulus.
+-- ...
 --
 -- To use type level numeric literals you need to enable the
 -- @DataKinds@ extension and to use infix syntax for @Mod@ or the @/@
@@ -91,6 +110,9 @@ import           GHC.TypeLits
 newtype i `Mod` (n :: Nat) = Mod i deriving (Eq, Ord)
 
 -- | Extract the underlying integral value from a modular type.
+--
+-- >>> unMod (10 :: ℤ/4)
+-- 2
 unMod :: i `Mod` n -> i
 unMod (Mod i) = i
 
@@ -100,26 +122,52 @@ type (/) = Mod
 -- | A synonym for Integer, also inspired by the ℤ/n syntax.
 type ℤ   = Integer
 
--- | Returns the bound of the modular type in the type itself. This
--- breaks the invariant of the type, so it shouldn't be used outside
--- this module.
-_bound :: forall n i. (Integral i, KnownNat n) => i
-_bound = fromInteger $ natVal (Proxy :: Proxy n)
-                            
+-- | The modulus has to be a non-zero type-level natural number.
+type Modulus n = (KnownNat n, 1 <= n)
+
+-- | Helper function to get the modulus of a @ℤ/n@ as a value. Used
+-- with type applications:
+--
+-- >>> modulus @5
+-- 5
+--
+modulus :: forall n i. (Integral i, Modulus n) => i
+modulus = fromInteger $ natVal (Proxy :: Proxy n)
+
 -- | Injects a value of the underlying type into the modulus type,
 -- wrapping as appropriate.
-toMod :: forall n i. (Integral i, KnownNat n) => i -> i `Mod` n
-toMod i = Mod $ i `mod` (_bound @n)
+--
+-- If @n@ is ambiguous, you can specify it with @TypeApplications@:
+--
+-- >>> toMod @6 10
+-- 4
+--
+-- Note that @n@ cannot be 0.
+toMod :: forall n i. (Integral i, Modulus n) => i -> i `Mod` n
+toMod i = Mod $ i `mod` (modulus @n)
+
+-- | Convert an integral number @i@ into a @'Mod'@ value with the
+-- type-level modulus @n@ specified with a proxy argument.
+--
+-- This lets you use 'toMod' without @TypeApplications@ in contexts
+-- where @n@ is ambiguous.
+modVal :: forall i proxy n. (Integral i, Modulus n)
+       => i
+       -> proxy n
+       -> Mod i n
+modVal i _ = toMod i
 
 -- | Wraps an integral number, converting between integral types.
-toMod' :: forall n i j. (Integral i, Integral j, KnownNat n) => i -> j `Mod` n
-toMod' i = toMod . fromIntegral $ i `mod` (fromInteger $ natVal (Proxy :: Proxy n))
+toMod' :: forall n i j. (Integral i, Integral j, Modulus n)
+       => i
+       -> j `Mod` n
+toMod' i = toMod . fromIntegral $ i `mod` (modulus @n)
 
 instance Show i => Show (i `Mod` n) where show (Mod i) = show i
-instance (Read i, Integral i, KnownNat n) => Read (i `Mod` n)
+instance (Read i, Integral i, Modulus n) => Read (i `Mod` n)
   where readsPrec prec = map (first toMod) . readsPrec prec
 
-instance (Integral i, KnownNat n) => Num (i `Mod` n) where
+instance (Integral i, Modulus n) => Num (i `Mod` n) where
   fromInteger = toMod . fromInteger
 
   Mod i₁ + Mod i₂ = toMod $ i₁ + i₂
@@ -129,37 +177,55 @@ instance (Integral i, KnownNat n) => Num (i `Mod` n) where
   signum (Mod i) = toMod $ signum i
   negate (Mod i) = toMod $ negate i
 
-instance (Integral i, KnownNat n) => Enum (i `Mod` n) where
+instance (Integral i, Modulus n) => Enum (i `Mod` n) where
   toEnum = fromIntegral
   fromEnum = fromIntegral . unMod
 
+  -- implementation straight from the report
   enumFrom     x   = enumFromTo     x maxBound
   enumFromThen x y = enumFromThenTo x y bound
     where
       bound | fromEnum y >= fromEnum x = maxBound
             | otherwise                = minBound
 
-instance (Integral i, KnownNat n) => Bounded (i `Mod` n) where
-  maxBound = Mod $ pred (_bound @n)
+instance (Integral i, Modulus n) => Bounded (i `Mod` n) where
+  maxBound = Mod $ pred (modulus @n)
   minBound = 0
 
-instance (Integral i, KnownNat n) => Real (i `Mod` n) where
+instance (Integral i, Modulus n) => Real (i `Mod` n) where
   toRational (Mod i) = toInteger i % 1
 
--- | Integer division uses modular inverse @'inv'@, so it is possible
--- to divide only by numbers coprime to @n@ and the remainder is
--- always @0@.
-instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
-  toInteger (Mod i) = toInteger i
-  i₁ `quotRem` i₂ = (i₁ * unwrap (inv i₂), 0)
+-- | Division uses modular inverse 'inv' so it is only possible to
+-- divide by numbers coprime to @n@.
+--
+-- >>> 1 / 3 :: ℤ/7
+-- 5
+-- >>> 3 * 5 :: ℤ/7
+-- 1
+--
+-- >>> 2 / 5 :: ℤ/7
+-- 6
+-- >>> 5 * 6 :: ℤ/7
+-- 2
+--
+-- Dividing by a number that is not coprime to @n@ will raise an
+-- error. Use 'inv' directly if you want to avoid this.
+--
+-- >>> 2 / 7 :: ℤ/7
+-- *** Exception: Cannot invert 0 (mod 7): not coprime to modulus.
+-- ...
+--
+instance (Integral i, Modulus n) => Fractional (i `Mod` n) where
+  fromRational r =
+    fromInteger (numerator r) / fromInteger (denominator r)
+  recip i = unwrap $ inv i
     where
-      -- these are only used for error message
-      modulus = show (_bound @n @Integer)
-      divisor = show (toInteger i₂)
       unwrap (Just x) = x
       unwrap Nothing  =
-        error ("divide by " ++ divisor ++
-               " (mod " ++ modulus ++ "), non-coprime to modulus")
+        let i'     = toInteger $ unMod i
+            bound' = modulus @n @Integer
+        in error $
+             printf "Cannot invert %d (mod %d): not coprime to modulus." i' bound'
 
 -- | The modular inverse.
 --
@@ -173,8 +239,8 @@ instance (Integral i, KnownNat n) => Integral (i `Mod` n) where
 -- >>> inv 6 :: Maybe (ℤ/15)
 -- Nothing
 --
-inv :: forall n i. (KnownNat n, Integral i) => (i/n) -> Maybe (i/n)
-inv (Mod k) = toMod . snd <$> inv' (_bound @n) k
+inv :: forall n i. (Modulus n, Integral i) => (i/n) -> Maybe (i/n)
+inv (Mod k) = toMod . snd <$> inv' (modulus @n) k
   where
     -- backwards Euclidean algorithm
     inv' _ 0 = Nothing
@@ -184,22 +250,50 @@ inv (Mod k) = toMod . snd <$> inv' (_bound @n) k
       (q', r') <- inv' x r
       pure (r', q' - r' * q)
 
--- | A modular number with an unknown bound.
+-- | A modular number with an unknown modulus.
+--
+-- Conceptually @SomeMod i = ∃n. i/n@.
 data SomeMod i where
-  SomeMod :: forall i (n :: Nat). KnownNat n => Mod i n -> SomeMod i
+  SomeMod :: forall i (n :: Nat). Modulus n => Mod i n -> SomeMod i
 
+-- | Shows both the number *and* its modulus:
+--
+-- >>> show (someModVal 10 4)
+-- "Just (someModVal 2 4)"
+--
+-- This doesn't *quite* follow the rule that the show instance should
+-- be a Haskell expression that evaluates to the given
+-- value—'someModVal' returns a 'Maybe'—but this seems like the
+-- closest we can reasonably get.
 instance Show i => Show (SomeMod i) where
-  showsPrec p (SomeMod x) = showsPrec p x
+  showsPrec p (SomeMod (x :: i/n)) = showParen (p > 10) $
+    showString $ printf "someModVal %s %d" (show x) (modulus @n @Integer)
 
--- | Convert an integral number @i@ into a @'Mod'@ value given modular
--- bound @n@ at type level.
-modVal :: forall i proxy n. (Integral i, KnownNat n) => i -> proxy n -> Mod i n
-modVal i _ = toMod i
-
--- | Convert an integral number @i@ into a @'Mod'@ value with an
--- unknown modulus.
-someModVal :: Integral i => i -> Integer -> Maybe (SomeMod i)
-someModVal i n =
-  case someNatVal n of
-    Nothing -> Nothing
-    Just (SomeNat proxy) -> Just (SomeMod (modVal i proxy))
+-- | Convert an integral number @i@ into @'SomeMod'@ with the modulus
+-- given at runtime.
+--
+-- That is, given @i :: ℤ@, @someModVal i modulus@ is equivalent to @i ::
+-- ℤ/modulus@ except we don't know @modulus@ statically.
+--
+-- >>> someModVal 10 4
+-- Just (someModVal 2 4)
+--
+-- Will return 'Nothing' if the modulus is 0 or negative:
+--
+-- >>> someModVal 10 (-10)
+-- Nothing
+--
+-- >>> someModVal 10 0
+-- Nothing
+--
+someModVal :: Integral i
+           => i
+           -- ^ Underlying integer @i@
+           -> Integer
+           -- ^ Modulus @n@
+           -> Maybe (SomeMod i)
+someModVal i n = do
+  SomeNat (_ :: p n) <- someNatVal n
+  case SNat @1 %<=? SNat @n of
+    LE Refl -> pure $ SomeMod $ toMod @n i
+    NLE _ _ -> Nothing
