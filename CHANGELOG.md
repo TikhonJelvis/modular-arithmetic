@@ -1,3 +1,10 @@
+2.0.0.0
+---
+* replaced `Integral` instance with `Fractional` instance (see #8 and #14)
+* added a constraint to ensure the type-level modulus is never 0
+* made `inv` return `Maybe` instead of raising an error
+* misc. refactoring and improvements
+
 1.2.1.3
 ---
 * fixed a name clash with GHC.TypeLits for base >= 4.11.0
