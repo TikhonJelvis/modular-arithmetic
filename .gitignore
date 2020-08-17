@@ -4,6 +4,7 @@ cabal.sandbox.config
 dist
 dist-newstyle
 cabal-dev
+cabal.project.local
 
 # Emacs
 *~
