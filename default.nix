@@ -1,4 +1,6 @@
-{ sources ? import nix/sources.nix {} }:
+{ sources ? import nix/sources.nix {}
+, compiler-nix-name ? "ghc884"
+}:
 let
   haskellNix = import sources."haskell.nix" {};
   pkgs = import haskellNix.sources.nixpkgs-2003 haskellNix.nixpkgsArgs;
@@ -8,5 +10,5 @@ pkgs.haskell-nix.project {
     name = "modular-arithmetic";
     src = ./.;
   };
-  compiler-nix-name = "ghc884";
+  inherit compiler-nix-name;
 }

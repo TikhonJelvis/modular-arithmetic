@@ -293,7 +293,7 @@ someModVal :: Integral i
            -- ^ Modulus @n@
            -> Maybe (SomeMod i)
 someModVal i n = do
-  SomeNat (_ :: p n) <- someNatVal n
+  SomeNat (_ :: Proxy n) <- someNatVal n
   case SNat @1 %<=? SNat @n of
     LE Refl -> pure $ SomeMod $ toMod @n i
     NLE _ _ -> Nothing
