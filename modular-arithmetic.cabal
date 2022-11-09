@@ -28,7 +28,8 @@ library
   default-language:    Haskell2010
   exposed-modules:     Data.Modular
   build-depends:       base >4.9 && <5
-                     , typelits-witnesses <0.5
+  if impl(ghc < 9.2.1)
+    build-depends:     typelits-witnesses <0.5
 
 test-suite examples
   hs-source-dirs:      test-suite, src
@@ -37,4 +38,5 @@ test-suite examples
   type:                exitcode-stdio-1.0
   build-depends:       base >4.9 && <5
                      , doctest >= 0.9
-                     , typelits-witnesses <0.5
+  if impl(ghc < 9.2.1)
+    build-depends:     typelits-witnesses <0.5

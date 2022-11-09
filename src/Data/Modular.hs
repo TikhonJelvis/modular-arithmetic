@@ -29,7 +29,6 @@ import           Control.Arrow (first)
 
 import           Data.Proxy    (Proxy (..))
 import           Data.Ratio    ((%), denominator, numerator)
-import           Data.Type.Equality     ((:~:)(..))
 
 import           Text.Printf   (printf)
 
@@ -39,8 +38,12 @@ import           GHC.TypeLits hiding (Mod)
 import           GHC.TypeLits
 #endif
 
+#if !MIN_VERSION_base(4,16,0)
+import           Data.Type.Equality     ((:~:)(..))
+
 import           GHC.TypeLits.Compare   ((%<=?), (:<=?)(LE, NLE))
 import           GHC.TypeLits.Witnesses (SNat (SNat))
+#endif
 
 -- $setup
 --
@@ -294,6 +297,13 @@ someModVal :: Integral i
            -> Maybe (SomeMod i)
 someModVal i n = do
   SomeNat (_ :: Proxy n) <- someNatVal n
+#if MIN_VERSION_base(4,16,0)
+  case Proxy @1 `cmpNat` Proxy @n of
+    LTI -> pure $ SomeMod $ toMod @n i
+    EQI -> pure $ SomeMod $ toMod @n i
+    GTI -> Nothing
+#else
   case SNat @1 %<=? SNat @n of
     LE Refl -> pure $ SomeMod $ toMod @n i
     NLE _ _ -> Nothing
+#endif
