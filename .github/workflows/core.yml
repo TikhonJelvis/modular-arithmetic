@@ -1,0 +1,25 @@
+# Run tests for every commit/PR/etc
+name: Tests
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v15
+
+      - name: Build + Test (GHC 8.10.7)
+        run: nix build .#modular-arithmetic_8107
+
+      - name: Build + Test (GHC 9.0.2)
+        run: nix build .#modular-arithmetic_902
