@@ -22,23 +22,23 @@
             };
 
             overrides = self: super: with pkgs.haskell.lib; { };
-
-            modifier = drv:
-              pkgs.haskell.lib.addBuildTools drv (with haskellPackages; [
-                cabal-install
-                ghcid
-                haskell-language-server
-
-                pkgs.haskellPackages.cabal-fmt
-                pkgs.nixpkgs-fmt
-              ]);
           };
 
         shellFor = ghc:
           pkgs.haskell.packages."${ghc}".shellFor {
             packages = p: [ (package ghc) ];
+
+            buildInputs = with haskellPackages; [
+              cabal-install
+              ghcid
+              haskell-language-server
+
+              pkgs.haskellPackages.cabal-fmt
+              pkgs.nixpkgs-fmt
+            ];
           };
-      in rec {
+      in
+      rec {
         # TODO: cleaner way to manage multiple GHC versions...
         packages = {
           modular-arithmetic_902 = package "ghc902";
