@@ -9,5 +9,9 @@ cabal.project.local
 # Emacs
 *~
 
+# Direnv
+.envrc
+.direnv
+
 # Nix
 result
