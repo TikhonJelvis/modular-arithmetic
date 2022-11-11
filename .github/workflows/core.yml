@@ -23,3 +23,6 @@ jobs:
 
       - name: Build + Test (GHC 9.0.2)
         run: nix build .#modular-arithmetic_902
+
+      - name: Build + Test (GHC 9.2.4)
+        run: nix build .#modular-arithmetic_924

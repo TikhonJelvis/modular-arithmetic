@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                modular-arithmetic
-version:             2.0.0.1
+version:             2.0.0.2
 synopsis:            A type for integers modulo some constant.
 
 description:         A convenient type for working with integers modulo some constant. It saves you from manually wrapping numeric operations all over the place and prevents a range of simple mistakes. @Integer `Mod` 7@ is the type of integers (mod 7) backed by @Integer@.
