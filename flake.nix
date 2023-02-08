@@ -41,12 +41,14 @@
       rec {
         # TODO: cleaner way to manage multiple GHC versions...
         packages = {
+          modular-arithmetic_944 = package "ghc944";
           modular-arithmetic_924 = package "ghc924";
           modular-arithmetic_902 = package "ghc902";
           modular-arithmetic_8107 = package "ghc8107";
         };
 
         devShells = {
+          modular-arithmetic_944 = shellFor "ghc944";
           modular-arithmetic_924 = shellFor "ghc924";
           modular-arithmetic_902 = shellFor "ghc902";
           modular-arithmetic_8107 = shellFor "ghc8107";
