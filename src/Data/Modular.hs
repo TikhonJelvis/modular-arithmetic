@@ -1,14 +1,16 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstraintKinds     #-}
-{-# LANGUAGE CPP                 #-}
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE ExplicitNamespaces  #-}
-{-# LANGUAGE KindSignatures      #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE AllowAmbiguousTypes  #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE ExplicitNamespaces   #-}
+{-# LANGUAGE GADTs                #-}
+{-# LANGUAGE KindSignatures       #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 
 -- |
 -- Types for working with integers modulo some constant.
@@ -25,23 +27,23 @@ module Data.Modular (
   modVal, SomeMod, someModVal
 ) where
 
-import           Control.Arrow (first)
+import           Control.Arrow          (first)
 
-import           Data.Proxy    (Proxy (..))
-import           Data.Ratio    ((%), denominator, numerator)
+import           Data.Proxy             (Proxy (..))
+import           Data.Ratio             (denominator, numerator, (%))
 
-import           Text.Printf   (printf)
+import           Text.Printf            (printf)
 
 #if MIN_VERSION_base(4,11,0)
-import           GHC.TypeLits hiding (Mod)
+import           GHC.TypeLits           hiding (Mod)
 #else
 import           GHC.TypeLits
 #endif
 
 #if !MIN_VERSION_base(4,16,0)
-import           Data.Type.Equality     ((:~:)(..))
+import           Data.Type.Equality     ((:~:) (..))
 
-import           GHC.TypeLits.Compare   ((%<=?), (:<=?)(LE, NLE))
+import           GHC.TypeLits.Compare   ((%<=?), (:<=?) (LE, NLE))
 import           GHC.TypeLits.Witnesses (SNat (SNat))
 #endif
 
