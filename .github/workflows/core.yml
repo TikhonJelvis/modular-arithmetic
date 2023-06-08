@@ -18,11 +18,14 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v15
 
-      - name: Build + Test (GHC 8.10.7)
-        run: nix build .#modular-arithmetic_8107
-
       - name: Build + Test (GHC 9.0.2)
         run: nix build .#modular-arithmetic_902
 
       - name: Build + Test (GHC 9.2.4)
         run: nix build .#modular-arithmetic_924
+
+      - name: Build + Test (GHC 9.4.4)
+        run: nix build .#modular-arithmetic_944
+
+      - name: Build + Test (GHC 9.6.1)
+        run: nix build .#modular-arithmetic_961
