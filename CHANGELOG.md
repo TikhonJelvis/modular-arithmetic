@@ -1,3 +1,7 @@
+2.0.0.3
+---
+* Fixed build for GHC 9.4+
+
 2.0.0.0
 ---
 * replaced `Integral` instance with `Fractional` instance (see #8 and #14)
